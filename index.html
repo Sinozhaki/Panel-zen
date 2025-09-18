@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Zen</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0d0f17;
+            color: #d1d5db;
+            margin: 0;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: -1;
+        }
+
+        .content-container {
+            position: relative;
+            z-index: 10;
+            padding: 2.5rem;
+            text-align: center;
+            width: 100%;
+            max-width: 480px;
+        }
+        
+        .title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #e5e7eb;
+            margin-bottom: 2rem;
+            position: relative;
+        }
+        .title::after {
+            content: '';
+            display: block;
+            width: 60px;
+            height: 4px;
+            background: #3b82f6;
+            margin: 0.5rem auto 0;
+            border-radius: 2px;
+        }
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 1rem 1.5rem;
+            margin-bottom: 1.5rem;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: transform 0.2s, box-shadow 0.2s;
+            background: #2563eb;
+            color: #ffffff;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .btn:hover {
+            background: #1d4ed8;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px -1px rgba(0, 0, 0, 0.1), 0 4px 6px -1px rgba(0, 0, 0, 0.06);
+        }
+        .dropdown {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+        .dropdown-btn {
+            display: block;
+            width: 100%;
+            padding: 1rem 1.5rem;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            background: #4b5563;
+            color: #e5e7eb;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.2s;
+            position: relative;
+        }
+        .dropdown-btn:hover {
+            background: #374151;
+            transform: translateY(-2px);
+        }
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 100%;
+            background-color: #374151;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border-radius: 0.75rem;
+            overflow: hidden;
+            z-index: 10;
+            margin-top: 0.5rem;
+        }
+        .dropdown-content a {
+            padding: 1rem 1.5rem;
+            display: block;
+            text-align: left;
+            text-decoration: none;
+            color: #d1d5db;
+            transition: background-color 0.2s;
+        }
+        .dropdown-content a:hover {
+            background-color: #4b5563;
+        }
+        .dropdown.active .dropdown-content {
+            display: block;
+        }
+        .dropdown-arrow {
+            position: absolute;
+            right: 1.5rem;
+            top: 50%;
+            transform: translateY(-50%) rotate(0deg);
+            transition: transform 0.2s;
+        }
+        .dropdown.active .dropdown-arrow {
+            transform: translateY(-50%) rotate(180deg);
+        }
+    </style>
+</head>
+<body>
+    <div class="content-container">
+        <h1 class="title">Panel Zen</h1>
+        
+        <!-- List Account Button -->
+        <a href="https://zendatarent.vercel.app/" class="btn">
+            List Account
+        </a>
+        
+        <!-- Referral Dropdown -->
+        <div class="dropdown" id="referralDropdown">
+            <button class="dropdown-btn">
+                Refferal
+                <svg class="dropdown-arrow w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+            </button>
+            <div class="dropdown-content">
+                <a href="https://referrer7777.vercel.app/">Referrer</a>
+                <a href="https://sinozhaki.github.io/7777-dev-area/">Admin</a>
+            </div>
+        </div>
+        
+        <!-- Payment Button -->
+        <a href="https://paymentbyzen.vercel.app/" class="btn">
+            Payment
+        </a>
+    </div>
+
+    <!-- Audio element for click sound -->
+    <!-- Place your 'klik.mp3' file in the same directory as this HTML file. -->
+    <audio id="clickSound" src="klik.mp3" preload="auto"></audio>
+
+    <script>
+        // Three.js for animated background
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        const cubes = [];
+        const cubeCount = 50;
+        const cubeMaterial = new THREE.MeshPhongMaterial({ color: 0x3b82f6 });
+        const light = new THREE.DirectionalLight(0xffffff, 0.8);
+        light.position.set(1, 1, 1).normalize();
+        scene.add(light);
+        scene.add(new THREE.AmbientLight(0x404040));
+
+        // Create cubes
+        for (let i = 0; i < cubeCount; i++) {
+            const cubeSize = Math.random() * 0.5 + 0.1;
+            const cubeGeometry = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
+            const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+            cube.position.x = (Math.random() - 0.5) * 20;
+            cube.position.y = (Math.random() - 0.5) * 20;
+            cube.position.z = (Math.random() - 0.5) * 20;
+            cube.rotation.x = Math.random() * 2 * Math.PI;
+            cube.rotation.y = Math.random() * 2 * Math.PI;
+            cubes.push(cube);
+            scene.add(cube);
+        }
+
+        camera.position.z = 5;
+
+        // Animation loop
+        const animate = function () {
+            requestAnimationFrame(animate);
+
+            cubes.forEach(cube => {
+                cube.rotation.x += 0.005 * (Math.random() > 0.5 ? 1 : -1);
+                cube.rotation.y += 0.005 * (Math.random() > 0.5 ? 1 : -1);
+                cube.position.z += 0.01;
+                if (cube.position.z > camera.position.z) {
+                    cube.position.z = (Math.random() - 0.5) * 20 - 15;
+                    cube.position.x = (Math.random() - 0.5) * 20;
+                    cube.position.y = (Math.random() - 0.5) * 20;
+                }
+            });
+
+            renderer.render(scene, camera);
+        };
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Function to play the audio
+        function playClickSound() {
+            const sound = document.getElementById('clickSound');
+            if (sound) {
+                sound.currentTime = 0; // Rewind to start
+                sound.play().catch(e => console.error("Audio playback error:", e));
+            }
+        }
+
+        // Add event listeners for click sound
+        document.querySelectorAll('.btn, .dropdown-btn, .dropdown-content a').forEach(element => {
+            element.addEventListener('click', (event) => {
+                playClickSound();
+            });
+        });
+
+        // Dropdown functionality
+        document.getElementById('referralDropdown').addEventListener('click', function(event) {
+            this.classList.toggle('active');
+            event.stopPropagation();
+        });
+        document.addEventListener('click', function(event) {
+            const referralDropdown = document.getElementById('referralDropdown');
+            if (!referralDropdown.contains(event.target)) {
+                referralDropdown.classList.remove('active');
+            }
+        });
+        
+        // Start animation on window load
+        window.onload = function() {
+            animate();
+        };
+    </script>
+</body>
+</html>
